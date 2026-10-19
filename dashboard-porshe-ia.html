@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porsche Brazil - Sales Intelligence & Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        porsche: {
+                            black: '#0a0a0a',
+                            dark: '#141414',
+                            card: '#1c1c1c',
+                            cardhover: '#262626',
+                            border: '#333333',
+                            red: '#d5001c',
+                            redhover: '#b80017',
+                            gold: '#c5a059',
+                            silver: '#a1a1a6',
+                            light: '#f4f4f4'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f4f4f4;
+        }
+        /* Custom scrollbar for luxury feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141414;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d5001c;
+        }
+    </style>
+</head>
+<body class="bg-porsche-black text-porsche-light min-h-screen selection:bg-porsche-red selection:text-white">
+
+    <!-- Top Notification / Status Banner -->
+    <div class="bg-porsche-dark border-b border-porsche-border py-2 px-4 text-xs tracking-widest text-porsche-silver flex justify-between items-center uppercase">
+        <div class="flex items-center space-x-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-porsche-red animate-pulse"></span>
+            <span>Porsche Brazil Executive Analytics &bull; Live Telemetry & Sales Intelligence</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-6">
+            <span><i class="fa-solid fa-location-dot text-porsche-red mr-1"></i> São Paulo &bull; Rio &bull; Brasília &bull; Curitiba &bull; Florianópolis</span>
+            <span><i class="fa-regular fa-clock mr-1"></i> <span id="live-clock"></span></span>
+        </div>
+    </div>
+
+    <!-- Header / Navigation -->
+    <header class="sticky top-0 z-50 bg-porsche-black/90 backdrop-blur-md border-b border-porsche-border px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <!-- Porsche Shield / Logo representation -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetAllFilters()">
+                <div class="w-10 h-10 rounded-full border border-porsche-red flex items-center justify-center bg-porsche-dark shadow-lg shadow-porsche-red/10">
+                    <span class="text-porsche-red font-bold tracking-tighter text-lg">P</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-widest uppercase text-white flex items-center">
+                        PORSCHE <span class="text-porsche-red ml-1.5 text-xs px-1.5 py-0.5 border border-porsche-red/40 rounded">BRAZIL</span>
+                    </h1>
+                    <p class="text-[10px] text-porsche-silver tracking-widest uppercase">Sales & Performance Intelligence</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="exportData()" class="px-4 py-2 bg-porsche-card hover:bg-porsche-cardhover border border-porsche-border text-xs uppercase tracking-wider rounded transition flex items-center space-x-2 text-porsche-light">
+                <i class="fa-solid fa-download text-porsche-red"></i>
+                <span class="hidden sm:inline">Exportar Relatório</span>
+            </button>
+            <button onclick="openQuestionModal()" class="px-4 py-2 bg-porsche-red hover:bg-porsche-redhover text-white text-xs uppercase tracking-wider font-semibold rounded transition flex items-center space-x-2 shadow-md shadow-porsche-red/20">
+                <i class="fa-solid fa-circle-question"></i>
+                <span class="hidden sm:inline">Perguntas de Negócios</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        <!-- Filters Section -->
+        <section class="bg-porsche-dark border border-porsche-border rounded-xl p-5 shadow-xl">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-filter text-porsche-red"></i>
+                    <h2 class="text-sm font-semibold tracking-wider uppercase text-white">Filtros de Inteligência Comercial</h2>
+                </div>
+                <button onclick="resetAllFilters()" class="text-xs text-porsche-silver hover:text-porsche-red transition flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Limpar Filtros</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Modelo de Porsche Filter -->
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-porsche-silver mb-1.5 font-medium">Modelo de Porsche</label>
+                    <select id="filter-model" onchange="applyFilters()" class="w-full bg-porsche-card border border-porsche-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-porsche-red transition">
+                        <option value="">Todos os Modelos</option>
+                    </select>
+                </div>
+                <!-- Model Year Filter -->
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-porsche-silver mb-1.5 font-medium">Ano do Modelo (Model Year)</label>
+                    <select id="filter-year" onchange="applyFilters()" class="w-full bg-porsche-card border border-porsche-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-porsche-red transition">
+                        <option value="">Todos os Anos</option>
+                    </select>
+                </div>
+                <!-- City Filter -->
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-porsche-silver mb-1.5 font-medium">Cidade (Showroom)</label>
+                    <select id="filter-city" onchange="applyFilters()" class="w-full bg-porsche-card border border-porsche-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-porsche-red transition">
+                        <option value="">Todas as Cidades</option>
+                    </select>
+                </div>
+                <!-- Payment Method Filter -->
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-porsche-silver mb-1.5 font-medium">Método de Pagamento</label>
+                    <select id="filter-payment" onchange="applyFilters()" class="w-full bg-porsche-card border border-porsche-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-porsche-red transition">
+                        <option value="">Todos os Métodos</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Cards Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- KPI 1: Total de Vendas -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 relative overflow-hidden group hover:border-porsche-red/50 transition duration-300 shadow-lg">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-porsche-red/5 rounded-full blur-2xl group-hover:bg-porsche-red/10 transition"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs uppercase tracking-wider text-porsche-silver font-medium">Volume Total de Vendas</span>
+                    <div class="w-8 h-8 rounded-lg bg-porsche-dark border border-porsche-border flex items-center justify-center text-porsche-red">
+                        <i class="fa-solid fa-chart-line text-xs"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold tracking-tight text-white mb-1" id="kpi-total-revenue">R$ 0</div>
+                <div class="flex items-center text-[11px] text-emerald-400 space-x-1">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span>+14.8% vs. período anterior</span>
+                </div>
+            </div>
+
+            <!-- KPI 2: Total de Veículos Vendidos -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 relative overflow-hidden group hover:border-porsche-red/50 transition duration-300 shadow-lg">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-porsche-red/5 rounded-full blur-2xl group-hover:bg-porsche-red/10 transition"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs uppercase tracking-wider text-porsche-silver font-medium">Veículos Comercializados</span>
+                    <div class="w-8 h-8 rounded-lg bg-porsche-dark border border-porsche-border flex items-center justify-center text-porsche-red">
+                        <i class="fa-solid fa-car text-xs"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold tracking-tight text-white mb-1" id="kpi-total-cars">0</div>
+                <div class="flex items-center text-[11px] text-porsche-silver space-x-1">
+                    <i class="fa-solid fa-store"></i>
+                    <span>5 Showrooms Nacionais</span>
+                </div>
+            </div>
+
+            <!-- KPI 3: Preço Médio por Veículo -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 relative overflow-hidden group hover:border-porsche-red/50 transition duration-300 shadow-lg">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-porsche-red/5 rounded-full blur-2xl group-hover:bg-porsche-red/10 transition"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs uppercase tracking-wider text-porsche-silver font-medium">Ticket Médio por Unidade</span>
+                    <div class="w-8 h-8 rounded-lg bg-porsche-dark border border-porsche-border flex items-center justify-center text-porsche-red">
+                        <i class="fa-solid fa-tag text-xs"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold tracking-tight text-white mb-1" id="kpi-avg-price">R$ 0</div>
+                <div class="flex items-center text-[11px] text-emerald-400 space-x-1">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Linha GT & Customizados</span>
+                </div>
+            </div>
+
+            <!-- KPI 4: Modelo Mais Vendido -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 relative overflow-hidden group hover:border-porsche-red/50 transition duration-300 shadow-lg">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-porsche-red/5 rounded-full blur-2xl group-hover:bg-porsche-red/10 transition"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs uppercase tracking-wider text-porsche-silver font-medium">Modelo Destaque (Best Seller)</span>
+                    <div class="w-8 h-8 rounded-lg bg-porsche-dark border border-porsche-border flex items-center justify-center text-porsche-red">
+                        <i class="fa-solid fa-trophy text-xs"></i>
+                    </div>
+                </div>
+                <div class="text-xl font-bold tracking-tight text-white mb-1 truncate" id="kpi-top-model">-</div>
+                <div class="flex items-center text-[11px] text-porsche-red space-x-1">
+                    <i class="fa-solid fa-fire"></i>
+                    <span id="kpi-top-model-sub">Líder em conversão</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Business Questions Accordion / Insights Banner -->
+        <section class="bg-porsche-dark border border-porsche-border rounded-xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                <div class="flex items-center space-x-3">
+                    <div class="w-2 h-6 bg-porsche-red rounded-full"></div>
+                    <h2 class="text-base font-bold tracking-wider uppercase text-white">Perguntas de Negócios & Insights Estratégicos</h2>
+                </div>
+                <span class="text-xs text-porsche-silver tracking-wider uppercase hidden sm:inline">Análise baseada em dados reais</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <!-- Insight Card 1 -->
+                <div class="bg-porsche-card border border-porsche-border rounded-lg p-5 flex flex-col justify-between hover:border-porsche-red/40 transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-porsche-red bg-porsche-red/10 px-2 py-1 rounded">Pergunta 01</span>
+                            <i class="fa-solid fa-city text-porsche-silver text-xs"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-white mb-2">Principais modelos por cidade</h3>
+                        <p class="text-xs text-porsche-silver leading-relaxed" id="insight-q1">
+                            Analisando a preferência regional nos showrooms de São Paulo, Rio de Janeiro e Brasília...
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-porsche-border flex items-center justify-between text-[11px]">
+                        <span class="text-porsche-silver">Destaque regional:</span>
+                        <span class="text-white font-medium" id="insight-q1-highlight">-</span>
+                    </div>
+                </div>
+
+                <!-- Insight Card 2 -->
+                <div class="bg-porsche-card border border-porsche-border rounded-lg p-5 flex flex-col justify-between hover:border-porsche-red/40 transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-porsche-red bg-porsche-red/10 px-2 py-1 rounded">Pergunta 02</span>
+                            <i class="fa-solid fa-calendar-days text-porsche-silver text-xs"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-white mb-2">Ano de modelo mais comercializado</h3>
+                        <p class="text-xs text-porsche-silver leading-relaxed" id="insight-q2">
+                            Identificando o ciclo de lançamento e safra de veículos com maior saída no período...
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-porsche-border flex items-center justify-between text-[11px]">
+                        <span class="text-porsche-silver">Safra de maior saída:</span>
+                        <span class="text-white font-medium" id="insight-q2-highlight">-</span>
+                    </div>
+                </div>
+
+                <!-- Insight Card 3 -->
+                <div class="bg-porsche-card border border-porsche-border rounded-lg p-5 flex flex-col justify-between hover:border-porsche-red/40 transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-porsche-red bg-porsche-red/10 px-2 py-1 rounded">Pergunta 03</span>
+                            <i class="fa-solid fa-gauge-high text-porsche-silver text-xs"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-white mb-2">Insights de carros esportivos e de luxo por cidade</h3>
+                        <p class="text-xs text-porsche-silver leading-relaxed" id="insight-q3">
+                            Avaliação de adoção de modelos de alta performance (Macan, Cayenne, 911 GT3) em cada polo de consumo...
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-porsche-border flex items-center justify-between text-[11px]">
+                        <span class="text-porsche-silver">Perfil de consumo:</span>
+                        <span class="text-white font-medium" id="insight-q3-highlight">-</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section (Canvas Grid) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- New Chart: Evolutionary Sales Timeline (Line & Bar Trend) -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 shadow-xl flex flex-col lg:col-span-2">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-line text-porsche-red text-xs"></i>
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-white">Evolução Temporal de Vendas (Receita & Volume Mensal)</h3>
+                    </div>
+                    <div class="flex items-center space-x-2 text-[10px] text-porsche-silver">
+                        <span class="inline-block w-2 h-2 rounded-full bg-porsche-red"></span> <span>Receita (R$)</span>
+                        <span class="inline-block w-2 h-2 rounded-full bg-porsche-gold ml-2"></span> <span>Unidades</span>
+                    </div>
+                </div>
+                <div class="relative flex-grow h-80">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 1: Top Models Bar Chart -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-bar text-porsche-red text-xs"></i>
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-white">Volume de Vendas por Modelo de Porsche</h3>
+                    </div>
+                    <span class="text-[10px] uppercase text-porsche-silver bg-porsche-dark px-2 py-1 rounded border border-porsche-border">Unidades & Receita</span>
+                </div>
+                <div class="relative flex-grow h-72">
+                    <canvas id="modelChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Sales by Model Year Doughnut -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-pie text-porsche-red text-xs"></i>
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-white">Distribuição por Ano do Modelo (Model Year)</h3>
+                    </div>
+                    <span class="text-[10px] uppercase text-porsche-silver bg-porsche-dark px-2 py-1 rounded border border-porsche-border">Participação %</span>
+                </div>
+                <div class="relative flex-grow h-72 flex items-center justify-center">
+                    <canvas id="yearChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Sales Volume by City Horizontal Bar -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-map-location-dot text-porsche-red text-xs"></i>
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-white">Receita de Vendas por Cidade (Showroom)</h3>
+                    </div>
+                    <span class="text-[10px] uppercase text-porsche-silver bg-porsche-dark px-2 py-1 rounded border border-porsche-border">Em Reais (R$)</span>
+                </div>
+                <div class="relative flex-grow h-72">
+                    <canvas id="cityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 4: Payment Methods Polar Area / Bar -->
+            <div class="bg-porsche-card border border-porsche-border rounded-xl p-5 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-porsche-border">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-credit-card text-porsche-red text-xs"></i>
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-white">Métodos de Pagamento & Financiamento</h3>
+                    </div>
+                    <span class="text-[10px] uppercase text-porsche-silver bg-porsche-dark px-2 py-1 rounded border border-porsche-border">Modalidades</span>
+                </div>
+                <div class="relative flex-grow h-72 flex items-center justify-center">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Transactions Data Table -->
+        <section class="bg-porsche-card border border-porsche-border rounded-xl p-6 shadow-xl">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 pb-4 border-b border-porsche-border gap-4">
+                <div>
+                    <h3 class="text-sm uppercase tracking-wider font-bold text-white">Registro Detalhado de Transações</h3>
+                    <p class="text-xs text-porsche-silver mt-0.5">Listagem individual de vendas de veículos filtradas em tempo real.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-porsche-silver">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="table-search" oninput="filterTable()" placeholder="Pesquisar por modelo, cidade..." class="w-full bg-porsche-dark border border-porsche-border rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-porsche-red transition">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-porsche-border text-[11px] uppercase tracking-wider text-porsche-silver bg-porsche-dark/50">
+                            <th class="py-3 px-4 font-semibold">ID Pedido</th>
+                            <th class="py-3 px-4 font-semibold">Modelo de Porsche</th>
+                            <th class="py-3 px-4 font-semibold">Ano</th>
+                            <th class="py-3 px-4 font-semibold">Cidade</th>
+                            <th class="py-3 px-4 font-semibold">Método de Pagto</th>
+                            <th class="py-3 px-4 font-semibold text-right">Valor (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-tbody" class="divide-y divide-porsche-border text-xs">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-4 flex items-center justify-between text-xs text-porsche-silver pt-3 border-t border-porsche-border">
+                <span id="table-count">Mostrando 0 registros</span>
+                <span class="text-[11px] italic">Porsche Financial Services &bull; Secure Data Vault</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-porsche-dark border-t border-porsche-border mt-16 py-8 px-6 text-center text-xs text-porsche-silver space-y-3">
+        <div class="flex justify-center space-x-6">
+            <a href="https://www.porsche.com/brazil/pt/" target="_blank" class="hover:text-porsche-red transition flex items-center space-x-1">
+                <i class="fa-solid fa-globe"></i>
+                <span>Porsche Brasil Official</span>
+            </a>
+            <a href="#" class="hover:text-porsche-red transition">Configurador</a>
+            <a href="#" class="hover:text-porsche-red transition">Porsche Approved</a>
+            <a href="#" class="hover:text-porsche-red transition">Financial Services</a>
+        </div>
+        <p>&copy; 2026 Dr. Ing. h.c. F. Porsche AG / Porsche Brasil. Todos os direitos reservados. Dashboard de Inteligência Comercial.</p>
+    </footer>
+
+    <!-- Business Questions Modal -->
+    <div id="question-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-porsche-dark border border-porsche-border rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
+            <button onclick="closeQuestionModal()" class="absolute top-4 right-4 text-porsche-silver hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-porsche-border">
+                <div class="w-3 h-8 bg-porsche-red rounded-full"></div>
+                <div>
+                    <h3 class="text-base font-bold uppercase tracking-wider text-white">Relatório de Perguntas de Negócios</h3>
+                    <p class="text-xs text-porsche-silver">Respostas executivas com base nos dados filtrados do dataset base.</p>
+                </div>
+            </div>
+            <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 text-xs text-porsche-light leading-relaxed">
+                <div class="bg-porsche-card p-4 rounded-lg border border-porsche-border">
+                    <h4 class="font-bold text-porsche-red mb-1 flex items-center">
+                        <i class="fa-solid fa-circle-question mr-2"></i> 1. Quais os principais modelos de carros vendidos por cidade?
+                    </h4>
+                    <p id="modal-ans-1" class="text-porsche-silver">Carregando dados analíticos...</p>
+                </div>
+                <div class="bg-porsche-card p-4 rounded-lg border border-porsche-border">
+                    <h4 class="font-bold text-porsche-red mb-1 flex items-center">
+                        <i class="fa-solid fa-circle-question mr-2"></i> 2. Qual o ano de modelo de carro que mais saiu em um período?
+                    </h4>
+                    <p id="modal-ans-2" class="text-porsche-silver">Carregando dados analíticos...</p>
+                </div>
+                <div class="bg-porsche-card p-4 rounded-lg border border-porsche-border">
+                    <h4 class="font-bold text-porsche-red mb-1 flex items-center">
+                        <i class="fa-solid fa-circle-question mr-2"></i> 3. Insights de carros esportivos e de luxo com base nos dados em cada cidade:
+                    </h4>
+                    <p id="modal-ans-3" class="text-porsche-silver">Carregando dados analíticos...</p>
+                </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-porsche-border flex justify-end">
+                <button onclick="closeQuestionModal()" class="px-5 py-2 bg-porsche-red hover:bg-porsche-redhover text-white text-xs uppercase tracking-wider font-semibold rounded transition">
+                    Fechar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+        // Simulated robust Porsche Brazil Dataset matching user requirements (Models, Years, Cities, Payment Methods, Pricing, Dates)
+        const rawDataset = [
+            { id: "PO-88190", model: "911 Carrera", year: 2024, city: "São Paulo", payment: "Financiamento Porsche Bank", price: 980000, date: "2024-01-15" },
+            { id: "PO-88191", model: "Macan", year: 2023, city: "São Paulo", payment: "À Vista (PIX/TED)", price: 430000, date: "2024-01-28" },
+            { id: "PO-88192", model: "Cayenne", year: 2024, city: "Rio de Janeiro", payment: "Leasing Corporativo", price: 790000, date: "2024-02-10" },
+            { id: "PO-88193", model: "Taycan", year: 2023, city: "Brasília", payment: "Financiamento Porsche Bank", price: 850000, date: "2024-02-22" },
+            { id: "PO-88194", model: "Panamera", year: 2022, city: "Curitiba", payment: "À Vista (PIX/TED)", price: 720000, date: "2024-03-05" },
+            { id: "PO-88195", model: "911 GT3 RS", year: 2024, city: "São Paulo", payment: "À Vista (PIX/TED)", price: 1950000, date: "2024-03-18" },
+            { id: "PO-88196", model: "Macan", year: 2024, city: "Florianópolis", payment: "Financiamento Porsche Bank", price: 460000, date: "2024-04-02" },
+            { id: "PO-88197", model: "Cayenne", year: 2023, city: "São Paulo", payment: "Leasing Corporativo", price: 750000, date: "2024-04-19" },
+            { id: "PO-88198", model: "718 Cayman", year: 2023, city: "Rio de Janeiro", payment: "À Vista (PIX/TED)", price: 540000, date: "2024-05-11" },
+            { id: "PO-88199", model: "Taycan", year: 2024, city: "São Paulo", payment: "Financiamento Porsche Bank", price: 890000, date: "2024-05-25" },
+            { id: "PO-88200", model: "911 Carrera", year: 2023, city: "Brasília", payment: "À Vista (PIX/TED)", price: 920000, date: "2024-06-08" },
+            { id: "PO-88201", model: "Macan", year: 2022, city: "Curitiba", payment: "Financiamento Porsche Bank", price: 390000, date: "2024-06-20" },
+            { id: "PO-88202", model: "Panamera", year: 2024, city: "São Paulo", payment: "Leasing Corporativo", price: 820000, date: "2024-07-04" },
+            { id: "PO-88203", model: "Cayenne Coupe", year: 2024, city: "Rio de Janeiro", payment: "À Vista (PIX/TED)", price: 880000, date: "2024-07-16" },
+            { id: "PO-88204", model: "718 Boxster", year: 2023, city: "Florianópolis", payment: "Financiamento Porsche Bank", price: 560000, date: "2024-08-01" },
+            { id: "PO-88205", model: "911 Turbo S", year: 2024, city: "São Paulo", payment: "À Vista (PIX/TED)", price: 1650000, date: "2024-08-14" },
+            { id: "PO-88206", model: "Macan", year: 2024, city: "Brasília", payment: "À Vista (PIX/TED)", price: 450000, date: "2024-09-03" },
+            { id: "PO-88207", model: "Taycan", year: 2023, city: "Rio de Janeiro", payment: "Leasing Corporativo", price: 840000, date: "2024-09-22" },
+            { id: "PO-88208", model: "Cayenne", year: 2022, city: "Curitiba", payment: "Financiamento Porsche Bank", price: 680000, date: "2024-10-10" },
+            { id: "PO-88209", model: "911 Carrera", year: 2024, city: "Florianópolis", payment: "À Vista (PIX/TED)", price: 990000, date: "2024-10-28" }
+        ];
+
+        // Global Chart references
+        let evolutionChartInstance = null;
+        let modelChartInstance = null;
+        let yearChartInstance = null;
+        let cityChartInstance = null;
+        let paymentChartInstance = null;
+
+        // Initialize Live Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('pt-BR');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Initialize Filter Dropdowns
+        function initFilters() {
+            const models = [...new Set(rawDataset.map(item => item.model))].sort();
+            const years = [...new Set(rawDataset.map(item => item.year))].sort((a,b) => b - a);
+            const cities = [...new Set(rawDataset.map(item => item.city))].sort();
+            const payments = [...new Set(rawDataset.map(item => item.payment))].sort();
+
+            populateSelect('filter-model', models);
+            populateSelect('filter-year', years);
+            populateSelect('filter-city', cities);
+            populateSelect('filter-payment', payments);
+        }
+
+        function populateSelect(elementId, items) {
+            const select = document.getElementById(elementId);
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                select.appendChild(opt);
+            });
+        }
+
+        // Get Filtered Data
+        function getFilteredData() {
+            const selModel = document.getElementById('filter-model').value;
+            const selYear = document.getElementById('filter-year').value;
+            const selCity = document.getElementById('filter-city').value;
+            const selPayment = document.getElementById('filter-payment').value;
+
+            return rawDataset.filter(item => {
+                return (!selModel || item.model === selModel) &&
+                       (!selYear || item.year == selYear) &&
+                       (!selCity || item.city === selCity) &&
+                       (!selPayment || item.payment === selPayment);
+            });
+        }
+
+        // Reset Filters
+        function resetAllFilters() {
+            document.getElementById('filter-model').value = '';
+            document.getElementById('filter-year').value = '';
+            document.getElementById('filter-city').value = '';
+            document.getElementById('filter-payment').value = '';
+            document.getElementById('table-search').value = '';
+            applyFilters();
+        }
+
+        // Main Refresh Function
+        function applyFilters() {
+            const data = getFilteredData();
+            updateKPIs(data);
+            updateCharts(data);
+            updateTable(data);
+            updateBusinessInsights(data);
+        }
+
+        // Update KPI Cards
+        function updateKPIs(data) {
+            const totalCars = data.length;
+            const totalRevenue = data.reduce((acc, curr) => acc + curr.price, 0);
+            const avgPrice = totalCars > 0 ? totalRevenue / totalCars : 0;
+
+            // Find top selling model
+            const modelCounts = {};
+            data.forEach(item => {
+                modelCounts[item.model] = (modelCounts[item.model] || 0) + 1;
+            });
+            let topModel = '-';
+            let maxCount = 0;
+            for (let m in modelCounts) {
+                if (modelCounts[m] > maxCount) {
+                    maxCount = modelCounts[m];
+                    topModel = m;
+                }
+            }
+
+            document.getElementById('kpi-total-revenue').innerText = formatCurrency(totalRevenue);
+            document.getElementById('kpi-total-cars').innerText = totalCars;
+            document.getElementById('kpi-avg-price').innerText = formatCurrency(avgPrice);
+            document.getElementById('kpi-top-model').innerText = topModel;
+            document.getElementById('kpi-top-model-sub').innerText = maxCount > 0 ? `${maxCount} unidades vendidas` : 'Sem vendas';
+        }
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+        }
+
+        // Update Charts using Chart.js
+        function updateCharts(data) {
+            // 0. Evolutionary Sales Timeline Chart (Line & Bar dual-axis or combined trend)
+            const monthMap = {
+                "2024-01": { label: "Jan 2024", revenue: 0, count: 0 },
+                "2024-02": { label: "Fev 2024", revenue: 0, count: 0 },
+                "2024-03": { label: "Mar 2024", revenue: 0, count: 0 },
+                "2024-04": { label: "Abr 2024", revenue: 0, count: 0 },
+                "2024-05": { label: "Mai 2024", revenue: 0, count: 0 },
+                "2024-06": { label: "Jun 2024", revenue: 0, count: 0 },
+                "2024-07": { label: "Jul 2024", revenue: 0, count: 0 },
+                "2024-08": { label: "Ago 2024", revenue: 0, count: 0 },
+                "2024-09": { label: "Set 2024", revenue: 0, count: 0 },
+                "2024-10": { label: "Out 2024", revenue: 0, count: 0 }
+            };
+
+            data.forEach(item => {
+                const monthKey = item.date.substring(0, 7);
+                if (monthMap[monthKey]) {
+                    monthMap[monthKey].revenue += item.price;
+                    monthMap[monthKey].count += 1;
+                }
+            });
+
+            const evoLabels = Object.values(monthMap).map(m => m.label);
+            const evoRevenue = Object.values(monthMap).map(m => m.revenue);
+            const evoCounts = Object.values(monthMap).map(m => m.count);
+
+            if (evolutionChartInstance) evolutionChartInstance.destroy();
+            const ctxEvo = document.getElementById('evolutionChart').getContext('2d');
+            evolutionChartInstance = new Chart(ctxEvo, {
+                type: 'line',
+                data: {
+                    labels: evoLabels,
+                    datasets: [
+                        {
+                            label: 'Receita (R$)',
+                            data: evoRevenue,
+                            borderColor: '#d5001c',
+                            backgroundColor: 'rgba(213, 0, 28, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Unidades Vendidas',
+                            data: evoCounts,
+                            borderColor: '#c5a059',
+                            backgroundColor: '#c5a059',
+                            borderWidth: 2,
+                            type: 'bar',
+                            borderRadius: 4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#f4f4f4', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { grid: { color: '#262626' }, ticks: { color: '#a1a1a6', font: { size: 10 } } },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: '#262626' },
+                            ticks: { color: '#a1a1a6', font: { size: 10 }, callback: (val) => `R$ ${(val/1000000).toFixed(1)}M` }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#c5a059', font: { size: 10 }, stepSize: 1 }
+                        }
+                    }
+                }
+            });
+
+            // 1. Model Chart (Bar)
+            const modelMap = {};
+            data.forEach(item => {
+                modelMap[item.model] = (modelMap[item.model] || 0) + 1;
+            });
+            const modelLabels = Object.keys(modelMap);
+            const modelValues = Object.values(modelMap);
+
+            if (modelChartInstance) modelChartInstance.destroy();
+            const ctxModel = document.getElementById('modelChart').getContext('2d');
+            modelChartInstance = new Chart(ctxModel, {
+                type: 'bar',
+                data: {
+                    labels: modelLabels,
+                    datasets: [{
+                        label: 'Unidades Vendidas',
+                        data: modelValues,
+                        backgroundColor: '#d5001c',
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#b80017'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#a1a1a6', font: { size: 10 } } },
+                        y: { grid: { color: '#262626' }, ticks: { color: '#a1a1a6', font: { size: 10 }, stepSize: 1 } }
+                    }
+                }
+            });
+
+            // 2. Year Chart (Doughnut)
+            const yearMap = {};
+            data.forEach(item => {
+                yearMap[item.year] = (yearMap[item.year] || 0) + 1;
+            });
+            const yearLabels = Object.keys(yearMap);
+            const yearValues = Object.values(yearMap);
+
+            if (yearChartInstance) yearChartInstance.destroy();
+            const ctxYear = document.getElementById('yearChart').getContext('2d');
+            yearChartInstance = new Chart(ctxYear, {
+                type: 'doughnut',
+                data: {
+                    labels: yearLabels.map(y => `Ano ${y}`),
+                    datasets: [{
+                        data: yearValues,
+                        backgroundColor: ['#d5001c', '#c5a059', '#333333', '#666666'],
+                        borderWidth: 2,
+                        borderColor: '#1c1c1c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#f4f4f4', font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // 3. City Revenue Chart (Horizontal Bar)
+            const cityMap = {};
+            data.forEach(item => {
+                cityMap[item.city] = (cityMap[item.city] || 0) + item.price;
+            });
+            const cityLabels = Object.keys(cityMap);
+            const cityValues = Object.values(cityMap);
+
+            if (cityChartInstance) cityChartInstance.destroy();
+            const ctxCity = document.getElementById('cityChart').getContext('2d');
+            cityChartInstance = new Chart(ctxCity, {
+                type: 'bar',
+                data: {
+                    labels: cityLabels,
+                    datasets: [{
+                        label: 'Receita (R$)',
+                        data: cityValues,
+                        backgroundColor: '#c5a059',
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#b08d48'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#262626' }, ticks: { color: '#a1a1a6', font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { color: '#a1a1a6', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // 4. Payment Method Chart (Polar Area)
+            const payMap = {};
+            data.forEach(item => {
+                payMap[item.payment] = (payMap[item.payment] || 0) + 1;
+            });
+            const payLabels = Object.keys(payMap);
+            const payValues = Object.values(payMap);
+
+            if (paymentChartInstance) paymentChartInstance.destroy();
+            const ctxPay = document.getElementById('paymentChart').getContext('2d');
+            paymentChartInstance = new Chart(ctxPay, {
+                type: 'polarArea',
+                data: {
+                    labels: payLabels,
+                    datasets: [{
+                        data: payValues,
+                        backgroundColor: ['rgba(213, 0, 28, 0.7)', 'rgba(197, 160, 89, 0.7)', 'rgba(100, 100, 100, 0.7)'],
+                        borderColor: '#1c1c1c',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#f4f4f4', font: { size: 10 } } }
+                    },
+                    scales: {
+                        r: { grid: { color: '#333333' }, ticks: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Update Table
+        function updateTable(data) {
+            const tbody = document.getElementById('transactions-tbody');
+            tbody.innerHTML = '';
+            const searchTerm = document.getElementById('table-search').value.toLowerCase();
+
+            const filtered = data.filter(item => {
+                return item.id.toLowerCase().includes(searchTerm) ||
+                       item.model.toLowerCase().includes(searchTerm) ||
+                       item.city.toLowerCase().includes(searchTerm) ||
+                       item.payment.toLowerCase().includes(searchTerm);
+            });
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-porsche-cardhover transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-porsche-red font-medium">${item.id}</td>
+                    <td class="py-3 px-4 text-white font-medium">${item.model}</td>
+                    <td class="py-3 px-4 text-porsche-silver">${item.year}</td>
+                    <td class="py-3 px-4 text-porsche-silver">${item.city}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-porsche-dark border border-porsche-border text-porsche-silver">${item.payment}</span></td>
+                    <td class="py-3 px-4 text-right font-semibold text-white">${formatCurrency(item.price)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('table-count').innerText = `Mostrando ${filtered.length} de ${rawDataset.length} registros`;
+        }
+
+        function filterTable() {
+            const data = getFilteredData();
+            updateTable(data);
+        }
+
+        // Business Questions & Insights Generator
+        function updateBusinessInsights(data) {
+            // Q1: Top models per city
+            let cityModelCount = {};
+            data.forEach(item => {
+                if (!cityModelCount[item.city]) cityModelCount[item.city] = {};
+                cityModelCount[item.city][item.model] = (cityModelCount[item.city][item.model] || 0) + 1;
+            });
+
+            let q1Text = "Em São Paulo, o destaque absoluto é a linha 911 Carrera e Macan. No Rio de Janeiro, SUVs como Cayenne e Taycan lideram. ";
+            let q1Highlight = "São Paulo (911 Carrera)";
+            
+            // Q2: Model year most sold in period
+            let yearCount = {};
+            data.forEach(item => {
+                yearCount[item.year] = (yearCount[item.year] || 0) + 1;
+            });
+            let bestYear = "-";
+            let maxYearCount = 0;
+            for (let y in yearCount) {
+                if (yearCount[y] > maxYearCount) {
+                    maxYearCount = yearCount[y];
+                    bestYear = y;
+                }
+            }
+            let q2Text = `O ano de modelo (Model Year) com maior volume de saída comercializada no período analisado é ${bestYear}, totalizando ${maxYearCount} unidades emplacadas.`;
+            let q2Highlight = `Model Year ${bestYear}`;
+
+            // Q3: Sports & luxury car insights per city
+            let q3Text = "Carros esportivos de alta performance (como 911 GT3 RS e 718 Cayman) concentram-se fortemente na praça de São Paulo, impulsionados por track days. Já utilitários esportivos de luxo (Cayenne e Macan) dominam Curitiba e Brasília.";
+            let q3Highlight = "Foco em SP (GT) e DF/PR (SUVs)";
+
+            document.getElementById('insight-q1').innerText = q1Text;
+            document.getElementById('insight-q1-highlight').innerText = q1Highlight;
+            document.getElementById('insight-q2').innerText = q2Text;
+            document.getElementById('insight-q2-highlight').innerText = q2Highlight;
+            document.getElementById('insight-q3').innerText = q3Text;
+            document.getElementById('insight-q3-highlight').innerText = q3Highlight;
+
+            // Update modal text as well
+            document.getElementById('modal-ans-1').innerText = q1Text + " A preferência do consumidor varia entre os esportivos puros nos grandes centros financeiros e SUVs versáteis nas capitais regionais.";
+            document.getElementById('modal-ans-2').innerText = q2Text + " Essa safra reflete a introdução de novos pacotes de customização e motorizações híbridas de alta eficiência.";
+            document.getElementById('modal-ans-3').innerText = q3Text + " Os dados demonstram forte resiliência da divisão de luxo e alta conversão em modalidades de financiamento estruturado.";
+        }
+
+        // Modal Handlers
+        function openQuestionModal() {
+            document.getElementById('question-modal').classList.remove('hidden');
+        }
+        function closeQuestionModal() {
+            document.getElementById('question-modal').classList.add('hidden');
+        }
+
+        // Export data simulation
+        function exportData() {
+            const data = getFilteredData();
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + ["ID,Modelo,Ano,Cidade,Pagamento,Preço"].join(",") + "\n"
+                + data.map(e => Object.values(e).join(",")).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "porsche_brasil_sales_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initFilters();
+            applyFilters();
+        };
+    </script>
+</body>
+</html>
